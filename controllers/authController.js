@@ -42,6 +42,7 @@ const signup = async (req, res, next) => {
       {
         httpOnly: true, // force secure cookie
         secure: NODE_ENV === 'prod',
+        sameSite: 'None',
         maxAge: 24 * 60 * 60 * 1000 // 1 day
       }
     )
@@ -95,6 +96,7 @@ const login = async (req, res, next) => {
       {
         httpOnly: true, // force secure cookie
         secure: NODE_ENV === 'prod',
+        sameSite: 'None',
         maxAge: 24 * 60 * 60 * 1000 // 1 day
       }
     )
@@ -131,6 +133,8 @@ const logout = async (req, res, next) => {
         {
           httpOnly: true,
           secure: NODE_ENV === 'prod',
+          sameSite: 'None',
+          maxAge: 0
         }
       )
       return res.sendStatus(204)
@@ -146,6 +150,8 @@ const logout = async (req, res, next) => {
       {
         httpOnly: true,
         secure: NODE_ENV === 'prod',
+        sameSite: 'None',
+        maxAge: 0
       }
     )
 
