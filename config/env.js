@@ -12,8 +12,8 @@ const PORT = process.env.PORT || 5000
 const DB_URI = process.env.DB_URI
 
 // jwt
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET
 
 // cloudinary
 const CLOUDINARY_NAME = process.env.CLOUDINARY_NAME
