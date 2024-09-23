@@ -48,7 +48,7 @@ const uploadAvatar = async (req, res, next) => {
             {avatarUrl: result.secure_url}
           )
 
-          res.status(200).json({url: result.secure_url})
+          res.status(200).json(result.secure_url)
         } catch (error) {
           return next(error)
         }
