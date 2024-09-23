@@ -33,12 +33,8 @@ const getExercise = async (req, res, next) => {
 }
 
 const createExercise = async (req, res, next) => {
-
   try {
     const {id} = req.user
-    const {title} = req.body
-
-    await exerciseModel.exerciseAlreadyExists(title.toLowerCase())
 
     const exercise = await exerciseModel.create({
       userId: id,
@@ -47,6 +43,7 @@ const createExercise = async (req, res, next) => {
     
     res.status(201).json(exercise)
   } catch (error) {
+    if (error.code === 11000) return res.status(400).json({error: 'Exercise already exists'})
     next(error)
   }
 }

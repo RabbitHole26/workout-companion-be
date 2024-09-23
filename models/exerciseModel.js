@@ -19,20 +19,21 @@ const exerciseSchema = new Schema({
   },
   userId: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   }
 }, {
   timestamps: true
 })
 
+// prevent duplication of exercises by title per user
+exerciseSchema.index(
+  {title: 1, userId: 1}, // define compound index where title comes first and userId second 
+  {unique: true} // the combination of title and userId is unique
+)
+
 exerciseSchema.statics.verifyExerciseId = function (id) {
   if (!checkIfMongoId(id)) throw new CustomError('Provided exercise ID is incorrect', 400)
-}
-
-exerciseSchema.statics.exerciseAlreadyExists = async function (title) {
-  const exerciseExists = await this.findOne({title: title.toLowerCase()})
-
-  if (exerciseExists) throw new CustomError('Exercise already exists', 400)
 }
 
 exerciseSchema.statics.verifyExerciseUpdate = async function (id, data) {
