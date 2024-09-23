@@ -7,6 +7,8 @@ const {
   REFRESH_TOKEN_SECRET
 } = require('../config/env')
 
+const production = NODE_ENV === 'prod'
+
 const signup = async (req, res, next) => {
   try {
     const data = req.body
@@ -41,8 +43,8 @@ const signup = async (req, res, next) => {
       refreshToken,
       {
         httpOnly: true, // force secure cookie
-        secure: NODE_ENV === 'prod',
-        sameSite: 'None',
+        secure: production ? true : false,
+        sameSite: production ? 'None' : 'Lax',
         maxAge: 24 * 60 * 60 * 1000 // 1 day
       }
     )
@@ -95,8 +97,8 @@ const login = async (req, res, next) => {
       refreshToken,
       {
         httpOnly: true, // force secure cookie
-        secure: NODE_ENV === 'prod',
-        sameSite: 'None',
+        secure: production ? true : false,
+        sameSite: production ? 'None' : 'Lax',
         maxAge: 24 * 60 * 60 * 1000 // 1 day
       }
     )
@@ -132,8 +134,8 @@ const logout = async (req, res, next) => {
         'jwt',
         {
           httpOnly: true,
-          secure: NODE_ENV === 'prod',
-          sameSite: 'None',
+          secure: production ? true : false,
+          sameSite: production ? 'None' : 'Lax',
           maxAge: 0
         }
       )
@@ -149,8 +151,8 @@ const logout = async (req, res, next) => {
       'jwt',
       {
         httpOnly: true,
-        secure: NODE_ENV === 'prod',
-        sameSite: 'None',
+        secure: production ? true : false,
+        sameSite: production ? 'None' : 'Lax',
         maxAge: 0
       }
     )
