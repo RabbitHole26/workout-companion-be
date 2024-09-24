@@ -3,9 +3,16 @@ require('dotenv').config()
 
 // mode
 const NODE_ENV = process.env.NODE_ENV
+const production = NODE_ENV === 'prod'
 
 // origin
 const ORIGIN = process.env.ORIGIN
+
+// email
+const EMAIL_HOST = process.env.EMAIL_HOST
+const EMAIL_USERNAME = process.env.EMAIL_USERNAME
+const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD
+const FROM_EMAIL = process.env.FROM_EMAIL
 
 // db
 const PORT = process.env.PORT || 5000
@@ -22,7 +29,12 @@ const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET
 
 module.exports = {
   NODE_ENV,
+  production,
   ORIGIN,
+  EMAIL_HOST,
+  EMAIL_USERNAME,
+  EMAIL_PASSWORD,
+  FROM_EMAIL,
   PORT,
   DB_URI,
   ACCESS_TOKEN_SECRET,
