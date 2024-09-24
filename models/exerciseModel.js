@@ -7,7 +7,6 @@ const exerciseSchema = new Schema({
   title: {
     type: String,
     required: [true, 'Title is required'],
-    unique: true
   },
   reps: {
     type: Number,
@@ -18,9 +17,8 @@ const exerciseSchema = new Schema({
     required: [true, 'Weight is required']
   },
   userId: {
-    type: String,
+    type: Schema.Types.ObjectId,
     required: true,
-    unique: true
   }
 }, {
   timestamps: true
