@@ -12,7 +12,6 @@ const { ORIGIN } = require('./config/env')
 const app = express()
 
 // use global middleware
-app.use(requestLogger) // logger middleware
 app.use(cors({
   credentials: true, // allow sending cookies from FE, in FE axios needs 'withCredentials' option set to true
   origin: ORIGIN // allowed origin
@@ -20,6 +19,7 @@ app.use(cors({
 app.use(express.json()) // JSON middleware
 app.use(express.urlencoded({ extended: true })) // URL-encoded middleware
 app.use(cookieParser()) // cookie-parser middleware
+app.use(requestLogger) // logger middleware
 
 // define routes
 app.use('/api', appRouter) // app routes
