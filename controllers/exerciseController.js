@@ -2,35 +2,35 @@
 const exerciseModel = require('../models/exerciseModel')
 const CustomError = require('../classes/customError')
 
-const getAllExercises = async (req, res, next) => {
-  try {
-    const {id} = req.user
+// const getAllExercises = async (req, res, next) => {
+//   try {
+//     const {id} = req.user
 
-    const allExercises = await exerciseModel
-      .find({userId: id})
-      .sort({createdAt: -1})  // sort exercises by createdAt date in descending order
+//     const allExercises = await exerciseModel
+//       .find({userId: id})
+//       .sort({createdAt: -1})  // sort exercises by createdAt date in descending order
 
-    res.status(200).json(allExercises)
-  } catch (error) {
-    next(error)
-  }
-}
+//     res.status(200).json(allExercises)
+//   } catch (error) {
+//     next(error)
+//   }
+// }
 
-const getExercise = async (req, res, next) => {
-  try {
-    const {id} = req.params
+// const getExercise = async (req, res, next) => {
+//   try {
+//     const {id} = req.params
 
-    await exerciseModel.verifyExerciseId(id)
+//     await exerciseModel.verifyExerciseId(id)
 
-    const exercise = await exerciseModel.findById(id)
+//     const exercise = await exerciseModel.findById(id)
 
-    if (!exercise) throw new CustomError('Exercise not found', 400)
+//     if (!exercise) throw new CustomError('Exercise not found', 400)
 
-    res.status(200).json(exercise)
-  } catch (error) {
-    next(error)
-  }
-}
+//     res.status(200).json(exercise)
+//   } catch (error) {
+//     next(error)
+//   }
+// }
 
 const createExercise = async (req, res, next) => {
   try {
@@ -89,8 +89,8 @@ const updateExercise = async (req, res, next) => {
 }
 
 module.exports = {
-  getAllExercises,
-  getExercise,
+  // getAllExercises,
+  // getExercise,
   createExercise,
   deleteExercise,
   updateExercise

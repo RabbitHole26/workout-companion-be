@@ -3,8 +3,8 @@ const express = require('express')
 const validator = require('../middleware/validator/validatorMiddleware')
 const exercise = require('../middleware/validator/validationRules/exerciseValidationRules')
 const {
-  getAllExercises,
-  getExercise,
+  // getAllExercises,
+  // getExercise,
   createExercise,
   deleteExercise,
   updateExercise
@@ -13,11 +13,11 @@ const {
 // deploy router
 const exerciseRouter = express.Router()
 
-// .../api/exercise/
-exerciseRouter.get('/', getAllExercises)
+// // .../api/exercise/
+// exerciseRouter.get('/', getAllExercises)
 
-// .../api/exercise/:id
-exerciseRouter.get('/:id', getExercise)
+// // .../api/exercise/:id
+// exerciseRouter.get('/:id', getExercise)
 
 // .../api/exercise/add-new-exercise
 exerciseRouter.post(
