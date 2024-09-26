@@ -30,6 +30,8 @@ exerciseSchema.index(
   {unique: true} // the combination of title and userId is unique
 )
 
+exerciseSchema.index({title: 'text'}) // add text index to title field for the full text search
+
 exerciseSchema.statics.verifyExerciseId = function (id) {
   if (!checkIfMongoId(id)) throw new CustomError('Provided exercise ID is incorrect', 400)
 }
@@ -53,5 +55,7 @@ exerciseSchema.pre('save', function (next) {
 })
 
 const exerciseModel = model('exercise', exerciseSchema)
+
+exerciseModel.createIndexes() // create indexes on app startup
 
 module.exports = exerciseModel
