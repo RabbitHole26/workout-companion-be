@@ -12,7 +12,6 @@ const ORIGIN = process.env.ORIGIN
 const EMAIL_HOST = process.env.EMAIL_HOST
 const EMAIL_USERNAME = process.env.EMAIL_USERNAME
 const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD
-const FROM_EMAIL = process.env.FROM_EMAIL
 
 // db
 const PORT = process.env.PORT || 5000
@@ -34,7 +33,6 @@ module.exports = {
   EMAIL_HOST,
   EMAIL_USERNAME,
   EMAIL_PASSWORD,
-  FROM_EMAIL,
   PORT,
   DB_URI,
   ACCESS_TOKEN_SECRET,

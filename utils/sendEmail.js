@@ -7,8 +7,7 @@ const {
   production, 
   EMAIL_HOST, 
   EMAIL_USERNAME, 
-  EMAIL_PASSWORD,
-  FROM_EMAIL
+  EMAIL_PASSWORD
 } = require('../config/env')
 
 const sendEmail = async (email, subject, payload, template, res, next) => {
@@ -28,7 +27,7 @@ const sendEmail = async (email, subject, payload, template, res, next) => {
     const compiledTemplate = handlebars.compile(source) // compile template
     const options = () => {
       return {
-        from: FROM_EMAIL,
+        from: EMAIL_USERNAME,
         to: email,
         subject: subject,
         html: compiledTemplate(payload)
