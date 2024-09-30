@@ -49,6 +49,18 @@ exerciseSchema.statics.verifyExerciseUpdate = async function (id, data) {
   if (!isDifferent) throw new CustomError('No changes were made', 400)
 }
 
+// delete userId field when serializing response object to JSON (prevent userId from being sent in any API response when calling res.json()) 
+exerciseSchema.set('toJSON', {
+  transform: function (
+    doc, // document
+    ret, // JSON representation object
+    options
+  ) {
+    delete ret.userId // delete userId field from the JSON representation object
+    return ret // return transformed object
+  }
+})
+
 exerciseSchema.pre('save', function (next) {
   this.title = this.title.toLowerCase()
   next()
