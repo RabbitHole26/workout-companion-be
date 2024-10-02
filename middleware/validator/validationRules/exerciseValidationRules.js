@@ -15,8 +15,13 @@ const exerciseValidationRules = [
     //   .withMessage('Reps is required')
     .isInt({min: 1})
       .withMessage('Reps must be non-negative number greater than 0')
-    .isInt({max: 1000})
-      .withMessage('Reps cannot be greater than 1000'),
+    .custom((val, {req}) => {
+      const limit = req.body.reps > 1000
+
+      if (limit) throw new Error('Reps cannot be greater than 1000')
+
+      return true
+    }),
 
   check('weight')
     .trim()
@@ -24,8 +29,13 @@ const exerciseValidationRules = [
     //   .withMessage('Weight is required')
     .isInt({min: 0})
       .withMessage('Weight must be a non-negative number')
-    .isInt({max: 1000})
-      .withMessage('Weight cannot be greater than 1000')
+    .custom((val, {req}) => {
+      const limit = req.body.weight > 1000
+
+      if (limit) throw new Error('Weight cannot be greater than 1000')
+
+      return true
+    })
 ]
 
 module.exports = exerciseValidationRules
