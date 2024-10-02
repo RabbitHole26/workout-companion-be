@@ -7,7 +7,8 @@ const loginValidationRules = [
     // .notEmpty()
     //   .withMessage('Email is required')
     .isEmail()
-      .withMessage('Please provide a valid email'),
+      .withMessage('Please provide a valid email')
+    .normalizeEmail(),
 
   check('password')
     .notEmpty()

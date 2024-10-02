@@ -6,6 +6,7 @@ const requestPasswordResetValidationRules = [
     .trim()
     .isEmail()
       .withMessage('Please provide a valid email')
+    .normalizeEmail()
 ]
 
 module.exports = requestPasswordResetValidationRules
