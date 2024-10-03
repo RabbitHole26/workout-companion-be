@@ -1,13 +1,14 @@
 // import dependencies
 const { Schema, model } = require('mongoose')
+const { randomUUID } = require('crypto') // node.js in-build method from crypto module to generate UUID subtype 4
 const CustomError = require('../classes/customError')
 const bcrypt = require('bcryptjs')
-const {v4: uuidv4} = require('uuid')
 
 const userSchema = new Schema({
   uuid: {
-    type: String,
-    unique: true
+    type: Schema.Types.UUID,
+    unique: true,
+    default: randomUUID() // generate random UUID v4 when a document is created
   },
   username: {
     type: String,
@@ -49,7 +50,6 @@ userSchema.statics.createUser = async function (data) {
 
   // create user
   const user = await this.create({
-    uuid: uuidv4(),
     username: username,
     email: email,
     password: pwHash
@@ -77,8 +77,7 @@ userSchema.statics.verifyLoginCredentials = async function (
 }
 
 userSchema.pre('save', function (next) {
-  this.username = this.username.toLowerCase()
-  this.email = this.email.toLowerCase()
+  if (this.isModified('username')) this.username = this.username.toLowerCase() // perform the operation only if the value of the username was changed
   next()
 })
 
