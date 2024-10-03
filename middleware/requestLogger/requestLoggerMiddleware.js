@@ -5,7 +5,8 @@ const express = require('express')
 const requestLogger = express()
 
 requestLogger.use((req, res, next) => {
-  console.log(`\nRequest path: ${req.path}\nRequest method: ${req.method}\nRequest body: ${JSON.stringify(req.body, null, 2)}\nRequest query: ${JSON.stringify(req.query, null, 2)}`)
+  console.log(`\nRequest path: ${req.path}\nRequest method: ${req.method}\nRequest body: ${JSON.stringify(req.body, null, 2)}\nRequest query: ${JSON.stringify(req.query, null, 2)}\nRequest cookie: ${req.headers.cookie}`)
+  
   next()
 })
 
