@@ -9,8 +9,14 @@ const bcrypt = require('bcryptjs')
 const {
   production,
   ORIGIN,
-  ACCESS_TOKEN_SECRET, 
+  ACCESS_TOKEN_SECRET,
+  ACCESS_TOKEN_EXPIRY_PROD,
+  ACCESS_TOKEN_EXPIRY_DEV,
   REFRESH_TOKEN_SECRET,
+  REFRESH_TOKEN_EXPIRY_PROD,
+  REFRESH_TOKEN_EXPIRY_DEV,
+  COOKIE_MAXAGE_PROD,
+  COOKIE_MAXAGE_DEV
 } = require('../config/env')
 
 const signup = async (req, res, next) => {
@@ -25,14 +31,22 @@ const signup = async (req, res, next) => {
     const accessToken = jwt.sign(
       {uuid},
       ACCESS_TOKEN_SECRET,
-      {expiresIn: '5m'}
+      {
+        expiresIn: production 
+          ? ACCESS_TOKEN_EXPIRY_PROD 
+          : ACCESS_TOKEN_EXPIRY_DEV
+      }
     )
 
     // create refresh token
     const refreshToken = jwt.sign(
       {uuid},
       REFRESH_TOKEN_SECRET,
-      {expiresIn: '1d'}
+      {
+        expiresIn: production 
+          ? REFRESH_TOKEN_EXPIRY_PROD
+          : REFRESH_TOKEN_EXPIRY_DEV
+      }
     )
 
     // save refresh token in db
@@ -49,7 +63,9 @@ const signup = async (req, res, next) => {
         httpOnly: true, // force secure cookie
         secure: production ? true : false,
         sameSite: production ? 'None' : 'Lax',
-        maxAge: 24 * 60 * 60 * 1000 // 1 day
+        maxAge: production
+          ? COOKIE_MAXAGE_PROD
+          : COOKIE_MAXAGE_DEV
       }
     )
 
@@ -79,14 +95,22 @@ const login = async (req, res, next) => {
     const accessToken = jwt.sign(
       {uuid},
       ACCESS_TOKEN_SECRET,
-      {expiresIn: '5m'}
+      {
+        expiresIn: production 
+          ? ACCESS_TOKEN_EXPIRY_PROD 
+          : ACCESS_TOKEN_EXPIRY_DEV
+      }
     )
 
     // create refresh token
     const refreshToken = jwt.sign(
       {uuid},
       REFRESH_TOKEN_SECRET,
-      {expiresIn: '1d'}
+      {
+        expiresIn: production 
+          ? REFRESH_TOKEN_EXPIRY_PROD
+          : REFRESH_TOKEN_EXPIRY_DEV
+      }
     )
 
     // save refresh token in db
@@ -103,7 +127,9 @@ const login = async (req, res, next) => {
         httpOnly: true, // force secure cookie
         secure: production ? true : false,
         sameSite: production ? 'None' : 'Lax',
-        maxAge: 24 * 60 * 60 * 1000 // 1 day
+        maxAge: production
+        ? COOKIE_MAXAGE_PROD
+        : COOKIE_MAXAGE_DEV
       }
     )
 
@@ -183,18 +209,54 @@ const refreshToken = async (req, res) => {
   jwt.verify(
     refreshToken,
     REFRESH_TOKEN_SECRET,
-    (err, decoded) => {
+    async (err, decoded) => {
       if (err || user.uuid !== decoded.uuid) return res.sendStatus(403)
       
-      const accessToken = jwt.sign(
+      // issue a new accessToken
+      const newAccessToken = jwt.sign(
         {uuid: decoded.uuid},
         ACCESS_TOKEN_SECRET,
-        {expiresIn: '5m'}
+        {
+          expiresIn: production 
+            ? ACCESS_TOKEN_EXPIRY_PROD 
+            : ACCESS_TOKEN_EXPIRY_DEV
+        }
       )
 
-      console.log('\nnewAccessToken: ', accessToken)
+      // issue a new refreshToken
+      const newRefreshToken = jwt.sign(
+        {uuid: user.uuid},
+        REFRESH_TOKEN_SECRET,
+        {
+          expiresIn: production 
+            ? REFRESH_TOKEN_EXPIRY_PROD
+            : REFRESH_TOKEN_EXPIRY_DEV
+        }
+      )
 
-      res.status(201).json({accessToken})
+      console.log(`\ncurrentRefreshToken: ${user.refreshToken}\nnewAccessToken: ${newAccessToken}\nnewRefreshToken: ${newRefreshToken}`)
+
+      user.refreshToken = newRefreshToken
+      await user.save()
+
+      console.log(`\nupdatedRefreshToken: ${user.refreshToken}`)
+
+      // send newRefreshToken via secure cookie
+      res.cookie(
+        'jwt',
+        newRefreshToken,
+        {
+          httpOnly: true, // force secure cookie
+          secure: production ? true : false,
+          sameSite: production ? 'None' : 'Lax',
+          maxAge: production
+            ? COOKIE_MAXAGE_PROD
+            : COOKIE_MAXAGE_DEV
+        }
+      )
+
+      // send response object with newAccessToken
+      res.status(201).json({newAccessToken})
     }
   )
 }
