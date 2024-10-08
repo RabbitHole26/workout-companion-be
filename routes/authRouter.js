@@ -1,5 +1,6 @@
 // import dependencies
 const express = require('express')
+const verifyPwToken = require('../middleware/verifyPwToken/verifyPwTokenMiddleware')
 const validator = require('../middleware/validator/validatorMiddleware')
 const signupRules = require('../middleware/validator/validationRules/signupValidationRules')
 const loginRules = require('../middleware/validator/validationRules/loginValidationRules')
@@ -10,6 +11,7 @@ const {
   login,
   logout,
   refreshToken,
+  verifyPasswordToken,
   requestPasswordReset,
   passwordReset
 } = require('../controllers/authController')
@@ -50,6 +52,16 @@ userRouter.post(
   requestPasswordReset
 )
 
+// apply verifyPwToken middleware to the routes below
+userRouter.use(verifyPwToken)
+
+// ...api/auth/verify-password-token
+userRouter.post(
+  '/verify-password-token',
+  verifyPasswordToken
+)
+
+// ...api/auth/password-reset
 userRouter.post(
   '/password-reset',
   validator(pwResetRules),

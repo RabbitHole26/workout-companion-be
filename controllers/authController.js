@@ -283,7 +283,7 @@ const requestPasswordReset = async (req, res, next) => {
     await pwTokenModel.create({
       userId: user._id,
       token: hash,
-      createdAt: Date.now()
+      // createdAt: Date.now()
     })
 
     const link = `${ORIGIN}/password-reset?token=${resetToken}&uuid=${user.uuid}` // define reset password link containing reset token and user uuid
@@ -303,21 +303,21 @@ const requestPasswordReset = async (req, res, next) => {
   }
 }
 
+const verifyPasswordToken = async (req, res, next) => {
+  try {
+    res.sendStatus(200)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const passwordReset = async (req, res, next) => {
   try {
     const {uuid, token, password} = req.body
 
-    const user = await userModel.findOne({uuid: uuid}) // find user by uuid
-
-    if (!user) throw new CustomError('User not found', 404)
-
-    const pwResetToken = await pwTokenModel.findOne({userId: user._id}) // find pw reset token by user _id
-    
-    if (!pwResetToken) throw new CustomError('Please request a new password reset link', 404)
-
-    const isValid = await bcrypt.compare(token, pwResetToken.token) // compare FE token with DB token
-
-    if (!isValid) throw new CustomError('Please request a new password reset link', 400)
+    // access obj passed by the middleware
+    const user = req.user
+    const pwResetToken = req.pwResetToken
 
     // hash new password
     const salt = await bcrypt.genSalt(10)
@@ -352,6 +352,7 @@ module.exports = {
   login,
   logout,
   refreshToken,
+  verifyPasswordToken,
   requestPasswordReset,
   passwordReset
 }
