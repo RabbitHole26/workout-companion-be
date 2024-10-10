@@ -3,8 +3,7 @@ const CustomError = require("../../classes/customError")
 
 const errorHandler = (err, req, res, next) => {
   if (err) {
-    console.log('\nerrorHandler: ', err)
-    console.log('\nerrorStack', err.stack)
+    console.log(`\nERROR HANDLER 🔍\nError: ${err}\nStack: ${err.stack}`)
 
     // check if error is a known error
     if (err instanceof CustomError) {

@@ -234,12 +234,12 @@ const refreshToken = async (req, res) => {
         }
       )
 
-      console.log(`\ncurrentRefreshToken: ${user.refreshToken}\nnewAccessToken: ${newAccessToken}\nnewRefreshToken: ${newRefreshToken}`)
+      console.log(`\nREFRESH TOKEN 🔍\nCurrent refresh token: ${user.refreshToken}\nNew access token: ${newAccessToken}\nNew refresh token: ${newRefreshToken}`)
 
       user.refreshToken = newRefreshToken
       await user.save()
 
-      console.log(`\nupdatedRefreshToken: ${user.refreshToken}`)
+      console.log(`Updated refresh token: ${user.refreshToken}`)
 
       // send newRefreshToken via secure cookie
       res.cookie(

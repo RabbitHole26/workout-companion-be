@@ -10,7 +10,7 @@ const uploadAvatar = async (req, res, next) => {
 
     if (!file) throw new CustomError('Please select a file', 400)
 
-    console.log('\nfileInUploadAvatar: ', file)
+    console.log('\nUPLOAD AVATAR 🔍\nAvatar file: ', file)
 
     // find user
     const user = await userModel.findById(id)
