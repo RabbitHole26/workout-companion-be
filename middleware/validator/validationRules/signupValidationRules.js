@@ -1,6 +1,7 @@
 // import dependencies
 const { check } = require('express-validator')
-const passwordValidationRules = require('./passwordResetValidationRules')
+const validatePassword = require('./passwordResetValidationRules')
+const validateEmail = require('./requestPasswordResetValidationRules')
 
 const signupValidationRules = [
   check('username')
@@ -10,15 +11,8 @@ const signupValidationRules = [
     .isLength({min: 3, max: 20})
       .withMessage('Username must be between 3 and 20 characters long'),
 
-  check('email')
-    .trim()
-    // .notEmpty()
-    //   .withMessage('Email is required')
-    .isEmail()
-      .withMessage('Please provide a valid email')
-    .normalizeEmail(),
-
-  ...passwordValidationRules // spread password validation rules
+  ...validateEmail,
+  ...validatePassword
 ]
 
 module.exports = signupValidationRules

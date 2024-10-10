@@ -1,14 +1,9 @@
 // import dependencies
 const { check } = require('express-validator')
+const validateEmail = require('./requestPasswordResetValidationRules')
 
 const loginValidationRules = [
-  check('email')
-    .trim()
-    // .notEmpty()
-    //   .withMessage('Email is required')
-    .isEmail()
-      .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+  ...validateEmail,
 
   check('password')
     .notEmpty()
