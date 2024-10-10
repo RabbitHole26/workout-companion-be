@@ -49,13 +49,13 @@ const signup = async (req, res, next) => {
       }
     )
 
-    // save refresh token in db
+    // save refresh token in DB
     await userModel.findByIdAndUpdate(
       user._id,
       {refreshToken: refreshToken}
     )
 
-    // send refreshToken via secure cookie
+    // send refresh token via secure cookie
     res.cookie(
       'jwt',
       refreshToken,
@@ -69,7 +69,7 @@ const signup = async (req, res, next) => {
       }
     )
 
-    // send response object with accessToken and user data
+    // send response object with access token and user data
     res.status(201).json({
       username: user.username,
       avatarUrl: user.avatarUrl,
@@ -113,13 +113,13 @@ const login = async (req, res, next) => {
       }
     )
 
-    // save refresh token in db
+    // save refresh token in DB
     await userModel.findByIdAndUpdate(
       user._id,
       {refreshToken: refreshToken}
     )
 
-    // send refreshToken via secure cookie
+    // send refresh token via secure cookie
     res.cookie(
       'jwt',
       refreshToken,
@@ -133,7 +133,7 @@ const login = async (req, res, next) => {
       }
     )
 
-    // send response object with accessToken and other user data
+    // send response object with access token and other user data
     res.status(200).json({
       username: user.username,
       avatarUrl: user.avatarUrl,
@@ -172,7 +172,7 @@ const logout = async (req, res, next) => {
       return res.sendStatus(204)
     }
 
-    // delete the refresh token in db
+    // delete the refresh token in DB
     user.refreshToken = null
     user.save()
 
@@ -212,7 +212,7 @@ const refreshToken = async (req, res) => {
     async (err, decoded) => {
       if (err || user.uuid !== decoded.uuid) return res.sendStatus(403)
       
-      // issue a new accessToken
+      // create new accessToken
       const newAccessToken = jwt.sign(
         {uuid: decoded.uuid},
         ACCESS_TOKEN_SECRET,
@@ -223,7 +223,7 @@ const refreshToken = async (req, res) => {
         }
       )
 
-      // issue a new refreshToken
+      // create new refreshToken
       const newRefreshToken = jwt.sign(
         {uuid: user.uuid},
         REFRESH_TOKEN_SECRET,
@@ -236,12 +236,13 @@ const refreshToken = async (req, res) => {
 
       console.log(`\nREFRESH TOKEN 🔍\nCurrent refresh token: ${user.refreshToken}\nNew access token: ${newAccessToken}\nNew refresh token: ${newRefreshToken}`)
 
+      // save new refresh token in DB
       user.refreshToken = newRefreshToken
       await user.save()
 
       console.log(`Updated refresh token: ${user.refreshToken}`)
 
-      // send newRefreshToken via secure cookie
+      // send new refresh token via secure cookie
       res.cookie(
         'jwt',
         newRefreshToken,
@@ -255,7 +256,7 @@ const refreshToken = async (req, res) => {
         }
       )
 
-      // send response object with newAccessToken
+      // send response object with new access token
       res.status(201).json({newAccessToken})
     }
   )
@@ -275,11 +276,11 @@ const requestPasswordReset = async (req, res, next) => {
   
     let resetToken = crypto.randomBytes(32).toString('hex') // create reset token using Node.js crypto API
   
-    // hash resetToken
+    // hash reset token
     const salt = await bcrypt.genSalt(10)
     const hash = await bcrypt.hash(resetToken, salt)
   
-    // save hashed resetToken in DB
+    // save hashed reset token in DB
     await pwTokenModel.create({
       userId: user._id,
       token: hash,
