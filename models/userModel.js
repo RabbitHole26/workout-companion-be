@@ -8,7 +8,7 @@ const userSchema = new Schema({
   uuid: {
     type: Schema.Types.UUID,
     unique: true,
-    default: randomUUID() // generate random UUID v4 when a document is created
+    default: () => randomUUID() // generate random UUID v4 when a document is created
   },
   username: {
     type: String,

@@ -18,7 +18,7 @@ const pwTokenSchema = new Schema({
   // usage of custom createdAt field to leverage mongoose TTL index to manage token expiry
   createdAt: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
     // mongo will delete expired documents automatically when the `expires` prop is defined (TTL: Time To Live index)
     expires: production
       ? PASSWORD_TOKEN_EXPIRY_PROD

@@ -283,8 +283,7 @@ const requestPasswordReset = async (req, res, next) => {
     // save hashed reset token in DB
     await pwTokenModel.create({
       userId: user._id,
-      token: hash,
-      // createdAt: Date.now()
+      token: hash
     })
 
     const link = `${ORIGIN}/password-reset?token=${resetToken}&uuid=${user.uuid}` // define reset password link containing reset token and user uuid
