@@ -12,7 +12,7 @@ const verifyJWT = (req, res, next) => {
 
   const token = authHeader.split(' ')[1]
 
-  console.log(`\nVERIFY JWT MIDDLEWARE 🔍\nAccess token: ${token}`)
+  console.log(`\nVERIFY JWT MIDDLEWARE 🔍\n 👉 Access token: ${token}`)
   
   jwt.verify(
     token,
@@ -20,7 +20,7 @@ const verifyJWT = (req, res, next) => {
     // use a callback for error and decoded
     async (err, decoded) => {
 
-      if (err !== null) console.log(`\nVERIFY JWT MIDDLEWARE 🔍\nVerify access token error: ${err}`)
+      if (err !== null) console.log(`\nVERIFY JWT MIDDLEWARE 🔍\n 👉 Verify access token error: ${err}`)
 
       if (err) return res.sendStatus(403)
 
