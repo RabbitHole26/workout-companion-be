@@ -1,6 +1,7 @@
 // import dependencies
 const userModel = require('../models/userModel')
 const pwTokenModel = require('../models/pwTokenModel')
+const refreshTokenModel = require('../models/refreshTokenModel')
 const CustomError = require('../classes/customError')
 const crypto = require('crypto')
 const sendEmail = require('../utils/sendEmail')
@@ -25,7 +26,8 @@ const signup = async (req, res, next) => {
 
     const user = await userModel.createUser(data)
 
-    const {uuid} = user
+    const {_id, uuid} = user
+    const {ip, userAgent} = req
 
     // create access token
     const accessToken = jwt.sign(
@@ -49,11 +51,21 @@ const signup = async (req, res, next) => {
       }
     )
 
+    // // save refresh token in DB
+    // await userModel.findByIdAndUpdate(
+    //   user._id,
+    //   {refreshToken: refreshToken}
+    // )
+
     // save refresh token in DB
-    await userModel.findByIdAndUpdate(
-      user._id,
-      {refreshToken: refreshToken}
-    )
+    await refreshTokenModel.create({
+      userId: _id,
+      token: refreshToken,
+      deviceMetadata: {
+        ipAddress: ip,
+        userAgent: userAgent
+      }
+    })
 
     // send refresh token via secure cookie
     res.cookie(
@@ -83,13 +95,14 @@ const signup = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const {email, password} = req.body
+    const {ip, userAgent} = req
 
     const user = await userModel.verifyLoginCredentials(
       email,
       password
     )
 
-    const {uuid} = user
+    const {_id, uuid} = user
 
     // create access token
     const accessToken = jwt.sign(
@@ -113,11 +126,21 @@ const login = async (req, res, next) => {
       }
     )
 
+    // // save refresh token in DB
+    // await userModel.findByIdAndUpdate(
+    //   user._id,
+    //   {refreshToken: refreshToken}
+    // )
+
     // save refresh token in DB
-    await userModel.findByIdAndUpdate(
-      user._id,
-      {refreshToken: refreshToken}
-    )
+    await refreshTokenModel.create({
+      userId: _id,
+      token: refreshToken,
+      deviceMetadata: {
+        ipAddress: ip,
+        userAgent: userAgent
+      }
+    })
 
     // send refresh token via secure cookie
     res.cookie(
@@ -153,13 +176,18 @@ const logout = async (req, res, next) => {
   const refreshToken = cookies.jwt
 
   try {
-    // find the user with refresh token
-    const user = await userModel.findOne({
-      refreshToken: refreshToken
+    // // find the user with refresh token
+    // const user = await userModel.findOne({
+    //   refreshToken: refreshToken
+    // })
+
+    const token = await refreshTokenModel.findOne({
+      token: refreshToken
     })
 
-    if (!user) {
-      // clear cookie if no user
+    // if (!user) {
+    if (!token) {
+      // // clear cookie if no user
       res.clearCookie(
         'jwt',
         {
@@ -172,9 +200,11 @@ const logout = async (req, res, next) => {
       return res.sendStatus(204)
     }
 
-    // delete the refresh token in DB
-    user.refreshToken = null
-    user.save()
+    // // delete the refresh token in DB
+    // user.refreshToken = null
+    // user.save()
+
+    await token.deleteOne() // delete refresh token from DB
 
     // clear cookies if user
     res.clearCookie(
@@ -195,16 +225,24 @@ const logout = async (req, res, next) => {
 
 const refreshToken = async (req, res) => {
   const cookies = req.cookies
+  const {ip, userAgent} = req
 
   if (!cookies?.jwt) return res.sendStatus(401)
 
   const refreshToken = cookies.jwt
 
-  const user = await userModel.findOne({
-    refreshToken: refreshToken
-  })
+  // const user = await userModel.findOne({
+  //   refreshToken: refreshToken
+  // })
 
-  if (!user) return res.sendStatus(403)
+  const token = await refreshTokenModel.findOne({token: refreshToken})
+
+  if (!token) return res.sendStatus(403)
+
+  const user = await userModel.findById(token.userId)
+  const {_id} = user
+
+  // if (!user) return res.sendStatus(403)
 
   jwt.verify(
     refreshToken,
@@ -234,13 +272,28 @@ const refreshToken = async (req, res) => {
         }
       )
 
-      console.log(`\nREFRESH TOKEN 🔍\n 👉 Current refresh token: ${user.refreshToken}\n 👉 New access token: ${newAccessToken}\n 👉 New refresh token: ${newRefreshToken}`)
+      // console.log(`\nREFRESH TOKEN 🔍\n 👉 Current refresh token: ${user.refreshToken}\n 👉 New access token: ${newAccessToken}\n 👉 New refresh token: ${newRefreshToken}`)
+
+      console.log(`\nREFRESH TOKEN 🔍\n 👉 Current refresh token: ${token.token}\n 👉 New access token: ${newAccessToken}\n 👉 New refresh token: ${newRefreshToken}`)
+
+      // delete the current refresh token if exists
+      await token.deleteOne()
+
+      // // save new refresh token in DB
+      // user.refreshToken = newRefreshToken
+      // await user.save()
 
       // save new refresh token in DB
-      user.refreshToken = newRefreshToken
-      await user.save()
+      await refreshTokenModel.create({
+        userId: _id,
+        token: newRefreshToken,
+        deviceMetadata: {
+          ipAddress: ip,
+          userAgent: userAgent
+        }
+      })
 
-      console.log(` 👉 Updated refresh token: ${user.refreshToken}`)
+      // console.log(` 👉 Updated refresh token: ${user.refreshToken}`)
 
       // send new refresh token via secure cookie
       res.cookie(

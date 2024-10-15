@@ -11,6 +11,10 @@ const { ORIGIN } = require('./config/env')
 // create express app
 const app = express()
 
+// enable trust proxy to use X-Forwarded-* headers to determine IP of the client
+// https://expressjs.com/en/api.html#app.settings.table
+app.enable('trust proxy')
+
 // use global middleware
 app.use(cors({
   credentials: true, // allow sending cookies from FE, in FE axios needs 'withCredentials' option set to true
