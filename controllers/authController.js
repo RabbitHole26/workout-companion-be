@@ -379,8 +379,7 @@ const passwordReset = async (req, res, next) => {
     // update password in the user document
     await userModel.findByIdAndUpdate(
       user._id,
-      {$set: {password: pwHash}},
-      {new: true}
+      {password: pwHash}
     )
 
     sendEmail(
