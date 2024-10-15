@@ -17,55 +17,55 @@ const {
 } = require('../controllers/authController')
 
 // deploy router
-const userRouter = express.Router()
+const authRouter = express.Router()
 
 // ...api/auth/signup
-userRouter.post(
+authRouter.post(
   '/signup', 
   validator(signupRules), 
   signup
 )
 
 // ...api/auth/login
-userRouter.post(
+authRouter.post(
   '/login',
   validator(loginRules), 
   login
 )
 
 // ...api/auth/logout
-userRouter.get(
+authRouter.get(
   '/logout',
   logout
 )
 
 // ...api/auth/refresh-token
-userRouter.get(
+authRouter.get(
   '/refresh-token',
   refreshToken
 )
 
 // ...api/auth/request-password-reset
-userRouter.post(
+authRouter.post(
   '/request-password-reset',
   validator(requestPwResetRules),
   requestPasswordReset
 )
 
 // apply verifyPwToken middleware to the routes below
-userRouter.use(verifyPwToken)
+authRouter.use(verifyPwToken)
 
 // ...api/auth/verify-password-token
-userRouter.post(
+authRouter.post(
   '/verify-password-token',
   verifyPasswordToken
 )
 
 // ...api/auth/password-reset
-userRouter.post(
+authRouter.post(
   '/password-reset',
   validator(pwResetRules),
   passwordReset
 )
 
-module.exports = userRouter
+module.exports = authRouter
