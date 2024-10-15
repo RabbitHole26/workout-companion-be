@@ -2,6 +2,7 @@
 const express = require('express')
 const verifyPwToken = require('../middleware/verifyPwToken/verifyPwTokenMiddleware')
 const validator = require('../middleware/validator/validatorMiddleware')
+const userAgentParser = require('../middleware/userAgentParser/userAgentParserMiddleware')
 const signupRules = require('../middleware/validator/validationRules/signupValidationRules')
 const loginRules = require('../middleware/validator/validationRules/loginValidationRules')
 const requestPwResetRules = require('../middleware/validator/validationRules/requestPasswordResetValidationRules')
@@ -18,16 +19,20 @@ const {
 
 // deploy router
 const authRouter = express.Router()
+const coreAuth = express.Router()
+
+// apply userAgentParser middleware to coreAuth routes
+coreAuth.use(userAgentParser)
 
 // ...api/auth/signup
-authRouter.post(
+coreAuth.post(
   '/signup', 
   validator(signupRules), 
   signup
 )
 
 // ...api/auth/login
-authRouter.post(
+coreAuth.post(
   '/login',
   validator(loginRules), 
   login
@@ -40,10 +45,13 @@ authRouter.get(
 )
 
 // ...api/auth/refresh-token
-authRouter.get(
+coreAuth.get(
   '/refresh-token',
   refreshToken
 )
+
+// mount the coreAuth sub-router to the authRouter
+authRouter.use('/', coreAuth)
 
 // ...api/auth/request-password-reset
 authRouter.post(
