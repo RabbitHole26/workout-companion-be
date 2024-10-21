@@ -5,17 +5,13 @@ const refreshTokenModel = require('../models/refreshTokenModel')
 const CustomError = require('../classes/customError')
 const crypto = require('crypto')
 const sendEmail = require('../utils/sendEmail')
+const signJwt = require('../utils/signJwt')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const {
   production,
   ORIGIN,
-  ACCESS_TOKEN_SECRET,
-  ACCESS_TOKEN_EXPIRY_PROD,
-  ACCESS_TOKEN_EXPIRY_DEV,
   REFRESH_TOKEN_SECRET,
-  REFRESH_TOKEN_EXPIRY_PROD,
-  REFRESH_TOKEN_EXPIRY_DEV,
   COOKIE_MAXAGE_PROD,
   COOKIE_MAXAGE_DEV
 } = require('../config/env')
@@ -29,33 +25,9 @@ const signup = async (req, res, next) => {
     const {_id, uuid} = user
     const {ip, userAgent} = req
 
-    // create access token
-    const accessToken = jwt.sign(
-      {uuid},
-      ACCESS_TOKEN_SECRET,
-      {
-        expiresIn: production 
-          ? ACCESS_TOKEN_EXPIRY_PROD 
-          : ACCESS_TOKEN_EXPIRY_DEV
-      }
-    )
-
-    // create refresh token
-    const refreshToken = jwt.sign(
-      {uuid},
-      REFRESH_TOKEN_SECRET,
-      {
-        expiresIn: production 
-          ? REFRESH_TOKEN_EXPIRY_PROD
-          : REFRESH_TOKEN_EXPIRY_DEV
-      }
-    )
-
-    // // save refresh token in DB
-    // await userModel.findByIdAndUpdate(
-    //   user._id,
-    //   {refreshToken: refreshToken}
-    // )
+    // create tokens
+    const accessToken = signJwt({uuid}, 'accessToken')
+    const refreshToken = signJwt({uuid}, 'refreshToken')
 
     // save refresh token in DB
     await refreshTokenModel.create({
@@ -104,33 +76,9 @@ const login = async (req, res, next) => {
 
     const {_id, uuid} = user
 
-    // create access token
-    const accessToken = jwt.sign(
-      {uuid},
-      ACCESS_TOKEN_SECRET,
-      {
-        expiresIn: production 
-          ? ACCESS_TOKEN_EXPIRY_PROD 
-          : ACCESS_TOKEN_EXPIRY_DEV
-      }
-    )
-
-    // create refresh token
-    const refreshToken = jwt.sign(
-      {uuid},
-      REFRESH_TOKEN_SECRET,
-      {
-        expiresIn: production 
-          ? REFRESH_TOKEN_EXPIRY_PROD
-          : REFRESH_TOKEN_EXPIRY_DEV
-      }
-    )
-
-    // // save refresh token in DB
-    // await userModel.findByIdAndUpdate(
-    //   user._id,
-    //   {refreshToken: refreshToken}
-    // )
+    // create tokens
+    const accessToken = signJwt({uuid}, 'accessToken')
+    const refreshToken = signJwt({uuid}, 'refreshToken')
 
     // save refresh token in DB
     await refreshTokenModel.create({
@@ -176,11 +124,6 @@ const logout = async (req, res, next) => {
   const refreshToken = cookies.jwt
 
   try {
-    // // find the user with refresh token
-    // const user = await userModel.findOne({
-    //   refreshToken: refreshToken
-    // })
-
     const token = await refreshTokenModel.findOne({
       token: refreshToken
     })
@@ -199,10 +142,6 @@ const logout = async (req, res, next) => {
       )
       return res.sendStatus(204)
     }
-
-    // // delete the refresh token in DB
-    // user.refreshToken = null
-    // user.save()
 
     await token.deleteOne() // delete refresh token from DB
 
@@ -231,10 +170,6 @@ const refreshToken = async (req, res) => {
 
   const refreshToken = cookies.jwt
 
-  // const user = await userModel.findOne({
-  //   refreshToken: refreshToken
-  // })
-
   const token = await refreshTokenModel.findOne({token: refreshToken})
 
   if (!token) return res.sendStatus(403)
@@ -250,38 +185,14 @@ const refreshToken = async (req, res) => {
     async (err, decoded) => {
       if (err || user.uuid !== decoded.uuid) return res.sendStatus(403)
       
-      // create new accessToken
-      const newAccessToken = jwt.sign(
-        {uuid: decoded.uuid},
-        ACCESS_TOKEN_SECRET,
-        {
-          expiresIn: production 
-            ? ACCESS_TOKEN_EXPIRY_PROD 
-            : ACCESS_TOKEN_EXPIRY_DEV
-        }
-      )
-
-      // create new refreshToken
-      const newRefreshToken = jwt.sign(
-        {uuid: user.uuid},
-        REFRESH_TOKEN_SECRET,
-        {
-          expiresIn: production 
-            ? REFRESH_TOKEN_EXPIRY_PROD
-            : REFRESH_TOKEN_EXPIRY_DEV
-        }
-      )
-
-      // console.log(`\nREFRESH TOKEN 🔍\n 👉 Current refresh token: ${user.refreshToken}\n 👉 New access token: ${newAccessToken}\n 👉 New refresh token: ${newRefreshToken}`)
+      // create tokens
+      const newAccessToken = signJwt({uuid: decoded.uuid}, 'accessToken')
+      const newRefreshToken = signJwt({uuid: user.uuid}, 'refreshToken')
 
       console.log(`\nREFRESH TOKEN 🔍\n 👉 Current refresh token: ${token.token}\n 👉 New access token: ${newAccessToken}\n 👉 New refresh token: ${newRefreshToken}`)
 
       // delete the current refresh token if exists
       await token.deleteOne()
-
-      // // save new refresh token in DB
-      // user.refreshToken = newRefreshToken
-      // await user.save()
 
       // save new refresh token in DB
       await refreshTokenModel.create({
@@ -292,8 +203,6 @@ const refreshToken = async (req, res) => {
           userAgent: userAgent
         }
       })
-
-      // console.log(` 👉 Updated refresh token: ${user.refreshToken}`)
 
       // send new refresh token via secure cookie
       res.cookie(
