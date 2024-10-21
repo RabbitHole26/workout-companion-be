@@ -5,6 +5,7 @@ const refreshTokenModel = require('../models/refreshTokenModel')
 const CustomError = require('../classes/customError')
 const crypto = require('crypto')
 const sendEmail = require('../utils/sendEmail')
+const sendCookie = require('../utils/sendCookie')
 const signJwt = require('../utils/signJwt')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
@@ -40,18 +41,7 @@ const signup = async (req, res, next) => {
     })
 
     // send refresh token via secure cookie
-    res.cookie(
-      'jwt',
-      refreshToken,
-      {
-        httpOnly: true, // force secure cookie
-        secure: production ? true : false,
-        sameSite: production ? 'None' : 'Lax',
-        maxAge: production
-          ? COOKIE_MAXAGE_PROD
-          : COOKIE_MAXAGE_DEV
-      }
-    )
+    sendCookie(res, 'jwt', refreshToken, next)
 
     // send response object with access token and user data
     res.status(201).json({
@@ -91,18 +81,7 @@ const login = async (req, res, next) => {
     })
 
     // send refresh token via secure cookie
-    res.cookie(
-      'jwt',
-      refreshToken,
-      {
-        httpOnly: true, // force secure cookie
-        secure: production ? true : false,
-        sameSite: production ? 'None' : 'Lax',
-        maxAge: production
-        ? COOKIE_MAXAGE_PROD
-        : COOKIE_MAXAGE_DEV
-      }
-    )
+    sendCookie(res, 'jwt', refreshToken, next)
 
     // send response object with access token and other user data
     res.status(200).json({
@@ -162,66 +141,57 @@ const logout = async (req, res, next) => {
   }
 }
 
-const refreshToken = async (req, res) => {
-  const cookies = req.cookies
-  const {ip, userAgent} = req
+const refreshToken = async (req, res, next) => {
+  try {
+    const cookies = req.cookies
+    const {ip, userAgent} = req
 
-  if (!cookies?.jwt) return res.sendStatus(401)
+    if (!cookies?.jwt) return res.sendStatus(401)
 
-  const refreshToken = cookies.jwt
+    const refreshToken = cookies.jwt
 
-  const token = await refreshTokenModel.findOne({token: refreshToken})
+    const token = await refreshTokenModel.findOne({token: refreshToken})
 
-  if (!token) return res.sendStatus(403)
+    if (!token) return res.sendStatus(403)
 
-  const user = await userModel.findById(token.userId)
-  const {_id} = user
+    const user = await userModel.findById(token.userId)
+    const {_id} = user
 
-  // if (!user) return res.sendStatus(403)
+    jwt.verify(
+      refreshToken,
+      REFRESH_TOKEN_SECRET,
+      async (err, decoded) => {
+        if (err || user.uuid !== decoded.uuid) return res.sendStatus(403)
+        
+        // create tokens
+        const newAccessToken = signJwt({uuid: decoded.uuid}, 'accessToken')
+        const newRefreshToken = signJwt({uuid: user.uuid}, 'refreshToken')
 
-  jwt.verify(
-    refreshToken,
-    REFRESH_TOKEN_SECRET,
-    async (err, decoded) => {
-      if (err || user.uuid !== decoded.uuid) return res.sendStatus(403)
-      
-      // create tokens
-      const newAccessToken = signJwt({uuid: decoded.uuid}, 'accessToken')
-      const newRefreshToken = signJwt({uuid: user.uuid}, 'refreshToken')
+        console.log(`\nREFRESH TOKEN 🔍\n 👉 Current refresh token: ${token.token}\n 👉 New access token: ${newAccessToken}\n 👉 New refresh token: ${newRefreshToken}`)
 
-      console.log(`\nREFRESH TOKEN 🔍\n 👉 Current refresh token: ${token.token}\n 👉 New access token: ${newAccessToken}\n 👉 New refresh token: ${newRefreshToken}`)
+        // delete the current refresh token if exists
+        await token.deleteOne()
 
-      // delete the current refresh token if exists
-      await token.deleteOne()
+        // save new refresh token in DB
+        await refreshTokenModel.create({
+          userId: _id,
+          token: newRefreshToken,
+          deviceMetadata: {
+            ipAddress: ip,
+            userAgent: userAgent
+          }
+        })
 
-      // save new refresh token in DB
-      await refreshTokenModel.create({
-        userId: _id,
-        token: newRefreshToken,
-        deviceMetadata: {
-          ipAddress: ip,
-          userAgent: userAgent
-        }
-      })
+        // send new refresh token via secure cookie
+        sendCookie(res, 'jwt', refreshToken, next)
 
-      // send new refresh token via secure cookie
-      res.cookie(
-        'jwt',
-        newRefreshToken,
-        {
-          httpOnly: true, // force secure cookie
-          secure: production ? true : false,
-          sameSite: production ? 'None' : 'Lax',
-          maxAge: production
-            ? COOKIE_MAXAGE_PROD
-            : COOKIE_MAXAGE_DEV
-        }
-      )
-
-      // send response object with new access token
-      res.status(201).json({newAccessToken})
-    }
-  )
+        // send response object with new access token
+        res.status(201).json({newAccessToken})
+      }
+    )
+  } catch (error) {
+    next(error)
+  }
 }
 
 const requestPasswordReset = async (req, res, next) => {
