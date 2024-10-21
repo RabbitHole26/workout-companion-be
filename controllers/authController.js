@@ -93,45 +93,38 @@ const login = async (req, res, next) => {
 }
 
 const logout = async (req, res, next) => {
-  const cookies = req.cookies
-
-  // check if refresh token cookie exists
-  if (!cookies?.jwt) return res.sendStatus(204) // no content to send, action successful
-
-  const refreshToken = cookies.jwt
+  function deleteCookie (name) {
+    res.clearCookie(
+      name,
+      {
+        httpOnly: true,
+        secure: production,
+        sameSite: production ? 'None' : 'Lax'
+      }
+    )
+  }
 
   try {
+    const cookies = req.cookies
+
+    // check if refresh token cookie exists
+    if (!cookies?.jwt) return res.sendStatus(204) // no content to send, action successful
+  
+    const refreshToken = cookies.jwt
+
     const token = await refreshTokenModel.findOne({
       token: refreshToken
     })
 
-    // if (!user) {
     if (!token) {
-      // // clear cookie if no user
-      res.clearCookie(
-        'jwt',
-        {
-          httpOnly: true,
-          secure: production ? true : false,
-          sameSite: production ? 'None' : 'Lax',
-          maxAge: 0
-        }
-      )
-      return res.sendStatus(204)
-    }
+      deleteCookie('jwt')
+
+      return res.sendStatus(204) // early return if no refresh token
+    } // delete cookie if refresh token not found in DB
 
     await token.deleteOne() // delete refresh token from DB
 
-    // clear cookies if user
-    res.clearCookie(
-      'jwt',
-      {
-        httpOnly: true,
-        secure: production ? true : false,
-        sameSite: production ? 'None' : 'Lax',
-        maxAge: 0
-      }
-    )
+    deleteCookie('jwt') // delete cookie after deleting refresh token from DB
 
     res.sendStatus(204)
   } catch (error) {
