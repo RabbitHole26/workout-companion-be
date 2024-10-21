@@ -12,9 +12,7 @@ const bcrypt = require('bcryptjs')
 const {
   production,
   ORIGIN,
-  REFRESH_TOKEN_SECRET,
-  COOKIE_MAXAGE_PROD,
-  COOKIE_MAXAGE_DEV
+  REFRESH_TOKEN_SECRET
 } = require('../config/env')
 
 const signup = async (req, res, next) => {

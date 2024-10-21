@@ -26,10 +26,6 @@ const userSchema = new Schema({
   avatarUrl: {
     type: String,
     default: null
-  },
-  refreshToken: {
-    type: String,
-    default: null
   }
 }, {
   timestamps: true
