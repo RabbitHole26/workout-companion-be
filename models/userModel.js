@@ -41,8 +41,7 @@ userSchema.statics.createUser = async function (data) {
   if (emailExists) throw new CustomError('Email already in use', 400)
 
   // hash password
-  const salt = await bcrypt.genSalt(10)
-  const pwHash = await bcrypt.hash(password, salt)
+  const pwHash = await bcrypt.hash(password, 10)
 
   // create user
   const user = await this.create({
