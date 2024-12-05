@@ -3,7 +3,7 @@ const userModel = require('../models/userModel')
 const pwTokenModel = require('../models/pwTokenModel')
 const refreshTokenModel = require('../models/refreshTokenModel')
 const CustomError = require('../classes/customError')
-const crypto = require('crypto')
+const { randomBytes, randomUUID } = require('crypto')
 const sendEmail = require('../utils/sendEmail')
 const sendCookie = require('../utils/sendCookie')
 const signJwt = require('../utils/signJwt')
@@ -18,24 +18,26 @@ const {
 const signup = async (req, res, next) => {
   try {
     const data = req.body
+    const {ip, deviceMetadata, uaFingerprint} = req
 
     const user = await userModel.createUser(data)
-
     const {_id, uuid} = user
-    const {ip, userAgent} = req
+
+    const refreshTokenUuid = randomUUID()
 
     // create tokens
     const accessToken = signJwt({uuid}, 'accessToken')
-    const refreshToken = signJwt({uuid}, 'refreshToken')
+    const refreshToken = signJwt({refreshTokenUuid}, 'refreshToken')
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
 
     // save refresh token in DB
     await refreshTokenModel.create({
+      uuid: refreshTokenUuid,
       userId: _id,
-      token: refreshToken,
-      deviceMetadata: {
-        ipAddress: ip,
-        userAgent: userAgent
-      }
+      token: hashedRefreshToken,
+      ipAddress: ip,
+      deviceMetadata,
+      uaFingerprint
     })
 
     // send refresh token via secure cookie
@@ -55,27 +57,26 @@ const signup = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const {email, password} = req.body
-    const {ip, userAgent} = req
+    const {ip, deviceMetadata, uaFingerprint} = req
 
-    const user = await userModel.verifyLoginCredentials(
-      email,
-      password
-    )
-
+    const user = await userModel.verifyLoginCredentials(email, password)
     const {_id, uuid} = user
+
+    const refreshTokenUuid = randomUUID()
 
     // create tokens
     const accessToken = signJwt({uuid}, 'accessToken')
-    const refreshToken = signJwt({uuid}, 'refreshToken')
+    const refreshToken = signJwt({refreshTokenUuid}, 'refreshToken')
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
 
     // save refresh token in DB
     await refreshTokenModel.create({
+      uuid: refreshTokenUuid,
       userId: _id,
-      token: refreshToken,
-      deviceMetadata: {
-        ipAddress: ip,
-        userAgent: userAgent
-      }
+      token: hashedRefreshToken,
+      ipAddress: ip,
+      deviceMetadata,
+      uaFingerprint,
     })
 
     // send refresh token via secure cookie
@@ -112,21 +113,29 @@ const logout = async (req, res, next) => {
   
     const refreshToken = cookies.jwt
 
-    const token = await refreshTokenModel.findOne({
-      token: refreshToken
-    })
+    jwt.verify(
+      refreshToken,
+      REFRESH_TOKEN_SECRET,
+      async (err, decoded) => {
+        if (err) {
+          console.log(`LOGOUT 🔍\nJWT verify error: ${err}`)
+          deleteCookie('jwt')
+          return res.sendStatus(204)
+        }
 
-    if (!token) {
-      deleteCookie('jwt')
+        const token = await refreshTokenModel.findOne({uuid: decoded.refreshTokenUuid})
 
-      return res.sendStatus(204) // early return if no refresh token
-    } // delete cookie if refresh token not found in DB
+        if (!token) {
+          deleteCookie('jwt')
+          return res.sendStatus(204) // early return if no refresh token
+        } // delete cookie if refresh token not found in DB
 
-    await token.deleteOne() // delete refresh token from DB
+        await token.deleteOne() // delete refresh token from DB
 
-    deleteCookie('jwt') // delete cookie after deleting refresh token from DB
-
-    res.sendStatus(204)
+        deleteCookie('jwt') // delete cookie after deleting refresh token from DB
+        res.sendStatus(204)
+      }
+    )
   } catch (error) {
     next(error)
   }
@@ -135,46 +144,56 @@ const logout = async (req, res, next) => {
 const refreshToken = async (req, res, next) => {
   try {
     const cookies = req.cookies
-    const {ip, userAgent} = req
+    const {ip, deviceMetadata, uaFingerprint} = req
 
     if (!cookies?.jwt) return res.sendStatus(401)
 
     const refreshToken = cookies.jwt
 
-    const token = await refreshTokenModel.findOne({token: refreshToken})
-
-    if (!token) return res.sendStatus(403)
-
-    const user = await userModel.findById(token.userId)
-    const {_id} = user
-
     jwt.verify(
       refreshToken,
       REFRESH_TOKEN_SECRET,
       async (err, decoded) => {
-        if (err || user.uuid !== decoded.uuid) return res.sendStatus(403)
+        if (err) return res.sendStatus(403)
+
+        const token = await refreshTokenModel
+          .findOne({uuid: decoded.refreshTokenUuid})
+          .populate('userId')
+
+        if (!token) return res.sendStatus(403)
+
+        // compare stored refresh token with jwt extracted from the cookie
+        const matchTokens = bcrypt.compare(token.token, refreshToken)
+
+        if (!matchTokens) return res.sendStatus(403)
+          
+        console.log(`\nREFRESH TOKEN 🔍\n 👉 JWT token matched saved refresh token ✅`)
+        
+        // generate refresh token uuid
+        const refreshTokenUuid = randomUUID()
         
         // create tokens
-        const newAccessToken = signJwt({uuid: decoded.uuid}, 'accessToken')
-        const newRefreshToken = signJwt({uuid: user.uuid}, 'refreshToken')
+        const newAccessToken = signJwt({uuid: token.userId.uuid}, 'accessToken')
+        const newRefreshToken = signJwt({refreshTokenUuid}, 'refreshToken')
+        const hashedNewRefreshToken = await bcrypt.hash(newRefreshToken, 10)
 
-        console.log(`\nREFRESH TOKEN 🔍\n 👉 Current refresh token: ${token.token}\n 👉 New access token: ${newAccessToken}\n 👉 New refresh token: ${newRefreshToken}`)
+        console.log(` 👉 Current refresh token: ${refreshToken}\n 👉 New access token: ${newAccessToken}\n 👉 New refresh token: ${newRefreshToken}`)
 
         // delete the current refresh token if exists
         await token.deleteOne()
 
-        // save new refresh token in DB
+        // save refresh token in DB
         await refreshTokenModel.create({
-          userId: _id,
-          token: newRefreshToken,
-          deviceMetadata: {
-            ipAddress: ip,
-            userAgent: userAgent
-          }
+          uuid: refreshTokenUuid,
+          userId: token.userId._id,
+          token: hashedNewRefreshToken,
+          ipAddress: ip,
+          deviceMetadata,
+          uaFingerprint
         })
 
         // send new refresh token via secure cookie
-        sendCookie(res, 'jwt', refreshToken, next)
+        sendCookie(res, 'jwt', newRefreshToken, next)
 
         // send response object with new access token
         res.status(201).json({newAccessToken})
@@ -197,16 +216,15 @@ const requestPasswordReset = async (req, res, next) => {
   
     if (token) await token.deleteOne() // if token exists delete it
   
-    let resetToken = crypto.randomBytes(32).toString('hex') // create reset token using Node.js crypto API
+    let resetToken = randomBytes(32).toString('hex') // create reset token using Node.js crypto API
   
     // hash reset token
-    const salt = await bcrypt.genSalt(10)
-    const hash = await bcrypt.hash(resetToken, salt)
+    const hashedResetToken = await bcrypt.hash(resetToken, 10)
   
     // save hashed reset token in DB
     await pwTokenModel.create({
       userId: user._id,
-      token: hash
+      token: hashedResetToken
     })
 
     const link = `${ORIGIN}/password-reset?token=${resetToken}&uuid=${user.uuid}` // define reset password link containing reset token and user uuid
@@ -243,8 +261,7 @@ const passwordReset = async (req, res, next) => {
     const pwResetToken = req.pwResetToken
 
     // hash new password
-    const salt = await bcrypt.genSalt(10)
-    const pwHash = await bcrypt.hash(password, salt)
+    const pwHash = await bcrypt.hash(password, 10)
 
     // update password in the user document
     await userModel.findByIdAndUpdate(
