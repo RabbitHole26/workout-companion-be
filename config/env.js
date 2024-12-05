@@ -41,6 +41,10 @@ const CLOUDINARY_NAME = process.env.CLOUDINARY_NAME
 const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY
 const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET
 
+// user agent parser middleware
+const UA_PARSER_RESULT_KEYS = process.env.UA_PARSER_RESULT_KEYS
+const keysArr = UA_PARSER_RESULT_KEYS.split('-')
+
 module.exports = {
   NODE_ENV,
   production,
@@ -64,5 +68,6 @@ module.exports = {
   COOKIE_MAXAGE_DEV,
   CLOUDINARY_NAME,
   CLOUDINARY_API_KEY,
-  CLOUDINARY_API_SECRET
+  CLOUDINARY_API_SECRET,
+  keysArr
 }
