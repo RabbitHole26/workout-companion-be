@@ -1,5 +1,5 @@
 // import dependencies
-const { production, COOKIE_MAXAGE_PROD, COOKIE_MAXAGE_DEV } = require('../config/env')
+const { production, COOKIE_MAXAGE_PROD, COOKIE_MAXAGE_DEV, DOMAIN } = require('../config/env')
 
 const sendCookie = (
   res, // response object
@@ -15,6 +15,7 @@ const sendCookie = (
         httpOnly: true, // prevent JS from accessing the cookie
         secure: production, // send cookie only through HTTPS protocol
         sameSite: production ? 'None' : 'Lax', // set how cookie is sent depending on CORS context
+        domain: production ? DOMAIN : undefined, // set DOMAIN to allow less restrictive cookies between domains
         maxAge: production // set cookie expiry
           ? COOKIE_MAXAGE_PROD
           : COOKIE_MAXAGE_DEV
