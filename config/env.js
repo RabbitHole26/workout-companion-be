@@ -36,6 +36,7 @@ const REFRESH_TOKEN_EXPIRY_SCHEMA_DEV = Number(process.env.REFRESH_TOKEN_EXPIRY_
 const COOKIE_MAXAGE_PROD = Number(process.env.COOKIE_MAXAGE_PROD)
 const COOKIE_MAXAGE_DEV = Number(process.env.COOKIE_MAXAGE_DEV)
 const DOMAIN = process.env.DOMAIN
+const PATH = process.env.PATH
 
 // cloudinary
 const CLOUDINARY_NAME = process.env.CLOUDINARY_NAME
@@ -68,6 +69,7 @@ module.exports = {
   COOKIE_MAXAGE_PROD,
   COOKIE_MAXAGE_DEV,
   DOMAIN,
+  PATH,
   CLOUDINARY_NAME,
   CLOUDINARY_API_KEY,
   CLOUDINARY_API_SECRET,
