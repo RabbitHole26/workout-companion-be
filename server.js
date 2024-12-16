@@ -26,7 +26,8 @@ app.use(cookieParser()) // cookie-parser middleware
 app.use(requestLogger) // logger middleware
 
 // define routes
-app.use('/api', appRouter) // app routes
+// app.use('/api', appRouter) // app routes
+app.use('/', appRouter) // app routes
 
 // error handler middleware placed at the end
 app.use(errorHandler)
