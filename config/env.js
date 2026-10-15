@@ -4,6 +4,14 @@ require('dotenv').config()
 // mode
 const NODE_ENV = process.env.NODE_ENV
 const production = NODE_ENV === 'prod'
+console.log(production
+  ? 'Production environment'
+  : 'Development environment'
+)
+
+// connection type
+const USES_HOTSPOT = process.env.USES_HOTSPOT === "yes"
+console.log(USES_HOTSPOT ? "Hotspot connection" : "WiFi connection")
 
 // cors
 const ORIGIN = process.env.ORIGIN
@@ -15,7 +23,9 @@ const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD
 
 // db
 const PORT = Number(process.env.PORT) || 5000
-const DB_URI = process.env.DB_URI
+const DB_URI = USES_HOTSPOT
+  ? process.env.HOTSPOT_DB_URI
+  : process.env.DB_URI
 
 // tokens
 // * secrets
@@ -54,6 +64,7 @@ module.exports = {
   EMAIL_PASSWORD,
   PORT,
   DB_URI,
+  // HOTSPOT_DB_URI,
   ACCESS_TOKEN_SECRET,
   REFRESH_TOKEN_SECRET,
   ACCESS_TOKEN_EXPIRY_PROD,
